@@ -92,7 +92,10 @@ async def cron_send_messages():
 
         results = messenger_api.send_messages(messages, psid)
 
-        sent_triggers = SentTriggers(psid, str(next_day), results)
-        sent_triggers.save()
+        has_message_ids = all([res.get('message_id')] for res in results)
+
+        if has_message_ids:
+            sent_triggers = SentTriggers(psid, str(next_day), results)
+            sent_triggers.save()
 
     return 'OK'
