@@ -52,7 +52,7 @@ async def post_test(json_data: Dict):
     return json_data
 
 
-@app.post('/message/cron')
+@app.get('/message/cron')
 async def cron_send_messages():
     answer_collection = FlowCollection()
     users_finished_flow = answer_collection.get_all_users_finished_flow()
@@ -88,7 +88,12 @@ async def cron_send_messages():
         if sent_triggers_exist and sent_triggers_exist.get('days').get(str(next_day)):
             continue
 
-        messages = TRIGGER_PER_DAY[f'day{next_day}']
+        try:
+            messages = TRIGGER_PER_DAY[f'day{next_day}']
+        except KeyError:
+            print(f'day{next_day} not supported')
+
+            continue
 
         results = messenger_api.send_messages(messages, psid)
 

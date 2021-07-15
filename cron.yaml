@@ -1,0 +1,4 @@
+cron:
+- description: "send messages next day flow"
+  url: /message/cron
+  schedule: every day 12:30
