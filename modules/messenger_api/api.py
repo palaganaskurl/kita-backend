@@ -2,8 +2,8 @@ from typing import Dict, List
 
 from requests import Session
 
-from app.modules.messenger_api.messenger_component import MessengerComponent
-from app.modules.messenger_api.quick_replies import MessengerQuickReplies
+from modules.messenger_api.messenger_component import MessengerComponent
+from modules.messenger_api.quick_replies import MessengerQuickReplies
 
 
 class MessengerAPI:

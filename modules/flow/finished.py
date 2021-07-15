@@ -1,6 +1,6 @@
 from typing import Union, Dict
 
-from app.modules.base.model import Model
+from modules.base.model import Model
 
 
 class FinishedFlow(Model):

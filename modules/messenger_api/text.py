@@ -1,6 +1,6 @@
 from typing import Dict
 
-from app.modules.messenger_api.messenger_component import MessengerComponent
+from modules.messenger_api.messenger_component import MessengerComponent
 
 
 class MessengerTextMessage(MessengerComponent):

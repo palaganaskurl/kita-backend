@@ -1,6 +1,6 @@
 from typing import Union, Dict, List
 
-from app.modules.base.model import Model
+from modules.base.model import Model
 
 
 class SentTriggers(Model):
