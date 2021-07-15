@@ -5,13 +5,13 @@ from typing import Dict
 import pytz
 from fastapi import FastAPI
 
-from modules.conversation_flows.trigger_per_day import TRIGGER_PER_DAY
-from modules.flow.answer import Answer
-from modules.flow.answer_collection import FlowCollection
-from modules.flow.finished import FinishedFlow
-from modules.flow.sent_triggers import SentTriggers
-from modules.messenger_api.api import MessengerAPI
-from modules.user.model import User
+from app.modules.conversation_flows.trigger_per_day import TRIGGER_PER_DAY
+from app.modules.flow.answer import Answer
+from app.modules.flow.answer_collection import FlowCollection
+from app.modules import FinishedFlow
+from app.modules.flow.sent_triggers import SentTriggers
+from app.modules import MessengerAPI
+from app.modules import User
 
 app = FastAPI()
 
