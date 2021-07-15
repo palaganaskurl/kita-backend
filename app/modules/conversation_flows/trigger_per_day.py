@@ -1,5 +1,5 @@
-from modules.messenger_api.quick_replies import MessengerQuickReplies
-from modules.messenger_api.text import MessengerTextMessage
+from app.modules.messenger_api.quick_replies import MessengerQuickReplies
+from app.modules.messenger_api.text import MessengerTextMessage
 
 TRIGGER_PER_DAY = {
     'day2': [

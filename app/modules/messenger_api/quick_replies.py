@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from modules.messenger_api.messenger_component import MessengerComponent
+from app.modules.messenger_api.messenger_component import MessengerComponent
 
 
 class MessengerQuickReplies(MessengerComponent):

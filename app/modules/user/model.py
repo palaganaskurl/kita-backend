@@ -2,7 +2,7 @@ from typing import Union, Dict
 
 from google.api_core.exceptions import AlreadyExists
 
-from modules.base.model import Model
+from app.modules.base.model import Model
 
 
 class User(Model):
