@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 import pytz
+from dialogflow_fulfillment import WebhookClient, Text
 from fastapi import FastAPI
 
-from modules.conversation_flows.trigger_per_day import TRIGGER_PER_DAY
+from modules.conversation_flows.trigger_per_day import TRIGGER_PER_DAY, TRIGGER_PER_DAY_FULFILLMENT
 from modules.flow.answer import Answer
 from modules.flow.answer_collection import FlowCollection
 from modules.flow.finished import FinishedFlow
@@ -21,6 +22,11 @@ async def read_root():
     return {'Hello': 'World'}
 
 
+def handler(agent: WebhookClient) -> None:
+    """Handle the webhook request.."""
+    pass
+
+
 @app.post('/webhook')
 async def post_test(json_data: Dict):
     facebook_payload = json_data['originalDetectIntentRequest']
@@ -33,8 +39,58 @@ async def post_test(json_data: Dict):
     if not user_existing_data:
         user.save()
 
-    # Checking if dialog is in dialogs for end of day
     query_result = json_data['queryResult']
+
+    # Check if from persistent menu
+    from_persistent_menu = query_result['parameters'].get('from_persistent_menu')
+
+    if from_persistent_menu:
+        finished_flow = FinishedFlow(psid, '')
+        finished_flow_dict = finished_flow.get()
+
+        if not finished_flow:
+            return json_data
+
+        days_finished = finished_flow_dict.get('days')
+
+        timezone = pytz.timezone('Asia/Manila')
+        last_finished = finished_flow_dict.get('updated_on_timestamp')
+        last_finished = last_finished.astimezone(timezone)
+        utc_now = pytz.utc.localize(datetime.utcnow())
+        current_time = utc_now.astimezone(timezone)
+
+        agent = WebhookClient(json_data)
+        agent.handle_request(handler)
+
+        if last_finished.day == current_time.day:
+            default_text = Text('Wait tomorrow for KITA\'s update. ;)')
+            agent.add(default_text)
+
+            return agent.response
+
+        days_finished = list(days_finished.keys())
+        days_finished = [int(day) for day in days_finished]
+        max_days_finished = max(days_finished)
+        next_day = max_days_finished + 1
+
+        # TODO: Add images on day 6 and day 7
+        try:
+            messages = TRIGGER_PER_DAY_FULFILLMENT[f'day{next_day}']
+        except KeyError:
+            print(f'day{next_day} not supported')
+
+            return json_data
+
+        default_text = Text('Ayernnn \'yan ang gusto ko sayo e! 😉 Heto, tuloy na natin ang drama:')
+        agent.add(default_text)
+
+        for message in messages:
+            agent.add(message)
+
+        return agent.response
+
+    # Checking if dialog is in dialogs for end of day
+
     end_of_day = query_result['parameters'].get('end_of_day')
 
     if end_of_day:
@@ -65,9 +121,11 @@ async def cron_send_messages():
     for user_finished_flow in users_finished_flow:
         user_finished_flow_dict = user_finished_flow.to_dict()
 
-        last_user_message_timestamp = user_finished_flow_dict['updated_on_timestamp']
-
         timezone = pytz.timezone('Asia/Manila')
+
+        last_user_message_timestamp = user_finished_flow_dict['updated_on_timestamp']
+        last_user_message_timestamp = last_user_message_timestamp.astimezone(timezone)
+
         utc_now = pytz.utc.localize(datetime.utcnow())
         current_time = utc_now.astimezone(timezone)
         current_time_plus_24_hours = current_time + timedelta(hours=23, minutes=50)
