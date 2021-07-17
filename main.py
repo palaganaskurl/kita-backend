@@ -67,7 +67,7 @@ async def post_test(json_data: Dict):
         current_time = utc_now.astimezone(timezone)
 
         if last_finished.day == current_time.day:
-            default_text = Text('Wait tomorrow for KITA\'s update. ;)')
+            default_text = Text('Ops, wait ka lang muna! Patience is da 🔑 Balik ka bukas para sa next story. 🤪')
             agent.add(default_text)
 
             return agent.response
