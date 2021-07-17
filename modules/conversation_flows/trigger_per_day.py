@@ -127,6 +127,13 @@ TRIGGER_PER_DAY = {
 }
 
 TRIGGER_PER_DAY_FULFILLMENT = {
+    'day1': [
+        Text('Huuuy! May isa akong friend na nalulunod na sa "money troubles". 👀'),
+        QuickReplies(
+            'Need niya lang ng advice... G ka ba? Sikreto lang \'to ha! 🤪',
+            ['Geh geh 🤷‍♀️', '😲😲😲', 'Mamaya na bz aqu']
+        )
+    ],
     'day2': [
         Text('O sabi ko babalik ako, diba?? 🤪'),
         QuickReplies(

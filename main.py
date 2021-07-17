@@ -47,9 +47,16 @@ async def post_test(json_data: Dict):
     if from_persistent_menu:
         finished_flow = FinishedFlow(psid, '')
         finished_flow_dict = finished_flow.get()
+        agent = WebhookClient(json_data)
+        agent.handle_request(handler)
 
-        if not finished_flow:
-            return json_data
+        if not finished_flow_dict:
+            messages = TRIGGER_PER_DAY_FULFILLMENT['day1']
+
+            for message in messages:
+                agent.add(message)
+
+            return agent.response
 
         days_finished = finished_flow_dict.get('days')
 
@@ -58,9 +65,6 @@ async def post_test(json_data: Dict):
         last_finished = last_finished.astimezone(timezone)
         utc_now = pytz.utc.localize(datetime.utcnow())
         current_time = utc_now.astimezone(timezone)
-
-        agent = WebhookClient(json_data)
-        agent.handle_request(handler)
 
         if last_finished.day == current_time.day:
             default_text = Text('Wait tomorrow for KITA\'s update. ;)')
