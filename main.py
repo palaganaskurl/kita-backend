@@ -8,7 +8,9 @@ from fastapi import FastAPI
 
 from modules.conversation_flows.trigger_per_day import TRIGGER_PER_DAY, TRIGGER_PER_DAY_FULFILLMENT
 from modules.flow.answer import Answer
-from modules.flow.answer_collection import FlowCollection
+from modules.flow.answer_collection import AnswerCollection
+from modules.flow.answers_controller import AnswersController
+from modules.flow.flow_collection import FlowCollection
 from modules.flow.finished import FinishedFlow
 from modules.flow.sent_triggers import SentTriggers
 from modules.messenger_api.api import MessengerAPI
@@ -166,3 +168,18 @@ async def cron_send_messages():
             sent_triggers.save()
 
     return 'OK'
+
+
+@app.get('/answers/analytics')
+async def get_answers_analytics():
+    answer_collection = AnswerCollection()
+
+    all_answers = answer_collection.get_all_user_answers()
+
+    grouped_answers_by_psid = AnswersController.group_answers_by_psid(all_answers)
+    grouped_by_day = AnswersController.grouped_answers_by_day(grouped_answers_by_psid)
+    final_data = AnswersController.get_date_started_ended_per_day_per_psid(grouped_by_day)
+
+    AnswersController.generate_excel(final_data)
+
+    return final_data
