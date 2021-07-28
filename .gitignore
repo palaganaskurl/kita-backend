@@ -130,3 +130,4 @@ dmypy.json
 
 .idea/
 credentials/kita-backend.json
+env_variables.yaml
