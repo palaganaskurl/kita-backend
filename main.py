@@ -4,14 +4,14 @@ from typing import Dict
 
 import pytz
 from dialogflow_fulfillment import WebhookClient, Text
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 
 from modules.conversation_flows.trigger_per_day import TRIGGER_PER_DAY, TRIGGER_PER_DAY_FULFILLMENT
 from modules.flow.answer import Answer
 from modules.flow.answer_collection import AnswerCollection
 from modules.flow.answers_controller import AnswersController
-from modules.flow.flow_collection import FlowCollection
 from modules.flow.finished import FinishedFlow
+from modules.flow.flow_collection import FlowCollection
 from modules.flow.sent_triggers import SentTriggers
 from modules.messenger_api.api import MessengerAPI
 from modules.user.model import User
@@ -115,7 +115,7 @@ async def post_test(json_data: Dict):
 
 
 @app.get('/message/cron')
-async def cron_send_messages():
+async def cron_send_messages(background_tasks: BackgroundTasks):
     answer_collection = FlowCollection()
     users_finished_flow = answer_collection.get_all_users_finished_flow()
     access_token = os.environ.get('ACCESS_TOKEN')
@@ -124,20 +124,32 @@ async def cron_send_messages():
     if not access_token:
         raise ValueError('No access token!')
 
-    for user_finished_flow in users_finished_flow:
-        user_finished_flow_dict = user_finished_flow.to_dict()
+    # Kurl PSID = 4101076556625537
 
+    def send(__user_finished_flow):
+        user_finished_flow_dict = __user_finished_flow.to_dict()
         timezone = pytz.timezone('Asia/Manila')
 
         last_user_message_timestamp = user_finished_flow_dict['updated_on_timestamp']
         last_user_message_timestamp = last_user_message_timestamp.astimezone(timezone)
+        last_user_message_timestamp_plus_23_hours = last_user_message_timestamp + timedelta(hours=23)
 
         utc_now = pytz.utc.localize(datetime.utcnow())
         current_time = utc_now.astimezone(timezone)
-        current_time_plus_24_hours = current_time + timedelta(hours=23, minutes=50)
 
-        if last_user_message_timestamp > current_time_plus_24_hours:
-            continue
+        last_user_message_timestamp_plus_23_hours = last_user_message_timestamp_plus_23_hours.replace(
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+        current_time = current_time.replace(
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+
+        if last_user_message_timestamp_plus_23_hours != current_time:
+            return
 
         days_finished = user_finished_flow_dict['days']
         days_finished = list(days_finished.keys())
@@ -150,14 +162,16 @@ async def cron_send_messages():
         sent_triggers_exist = sent_triggers.get()
 
         if sent_triggers_exist and sent_triggers_exist.get('days').get(str(next_day)):
-            continue
+            return
 
         try:
             messages = TRIGGER_PER_DAY[f'day{next_day}']
         except KeyError:
             print(f'day{next_day} not supported')
 
-            continue
+            return
+
+        print('Sending message to', psid, 'Day', next_day)
 
         results = messenger_api.send_messages(messages, psid)
 
@@ -166,6 +180,9 @@ async def cron_send_messages():
         if has_message_ids:
             sent_triggers = SentTriggers(psid, str(next_day), results)
             sent_triggers.save()
+
+    for user_finished_flow in users_finished_flow:
+        background_tasks.add_task(send, user_finished_flow)
 
     return 'OK'
 
