@@ -1,1 +1,1 @@
-# kita-backend
+# Backend for Kita Messenger Bot
